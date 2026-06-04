@@ -1,0 +1,51 @@
+# =====================================================
+# 스마트 제조 AI Agent — Git 추적 제외
+# =====================================================
+
+# --- 시크릿·환경 변수 (절대 커밋 금지) ---
+.env
+.env.local
+.env.*.local
+**/*api*key*
+**/secrets/
+*.pem
+*.key
+
+# --- 제조 데이터 (민감 가능성) ---
+data/raw/
+data/private/
+*.csv.private
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Vector DB 로컬 저장소 ---
+chroma_db/
+*.faiss
+*.index
+.chromadb/
+qdrant_storage/
+
+# --- LangChain/LangGraph 캐시 ---
+.langchain/
+.langgraph/
+
+# --- 로그·임시 ---
+*.log
+*.tmp
+logs/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
