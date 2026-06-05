@@ -95,7 +95,7 @@
 | 컬럼명 | 데이터 타입 | 설명 및 활용 예시 |
 |---|---|---|
 | id | UUID | 각 데이터 청크의 고유 식별자 |
-| embedding | Vector(1536) | 임베딩 변환된 벡터값 |
+| embedding | Vector(768) 잠정 — 임베딩 모델 확정 후 변경 가능 (ADR-003) | 임베딩 변환된 벡터값 |
 | content | Text | 실제 매뉴얼 텍스트 (예: "SRVO-062 BZAL alarm... Replace battery...") |
 | metadata | JSONB | 검색 정확도를 높이는 핵심 필터링 요소 |
 
@@ -108,20 +108,18 @@ metadata(JSONB) Key-Value 예시:
 ### 5.2 구축 프로세스
 1. **PDF Parsing**: "3. TROUBLESHOOTING" 챕터의 테이블 구조를 인식하여 에러 코드 단위로 텍스트 추출
 2. **Enrichment**: 추출된 텍스트에 "Action" 단계별 번호를 메타데이터로 태깅 (See Section 태깅 제외 — ADR-002)
-3. **Embedding**: OpenAI Embedding을 통해 텍스트를 벡터로 변환하여 PostgreSQL에 저장
+3. **Embedding**: Gemini 임베딩(gemini-embedding-001)으로 텍스트를 벡터로 변환하여 PostgreSQL에 저장 (ADR-003)
 
 ### 5.3 핵심 기술 스택
 
 | 구분 | 선택 | 역할 | 선정 이유 |
 |---|---|---|---|
-| LLM | OpenAI GPT-4o | 영문 매뉴얼 내용 이해 + 한국어 실시간 번역·요약 답변 생성 | 추론·다국어 처리 능력으로 전문 용어 훼손 없이 자연스러운 한국어 가이드 제공 |
+| LLM | Gemini (구체 모델 A6 검증 후 확정 — ADR-003) | 영문 매뉴얼 내용 이해 + 한국어 실시간 번역·요약 답변 생성 | 추론·다국어 처리 능력으로 전문 용어 훼손 없이 자연스러운 한국어 가이드 제공 |
 | Vector DB | PostgreSQL (pgvector) | 대용량 매뉴얼 데이터 벡터 저장·검색 | 관계형 데이터(에러코드·메타데이터)와 비정형 데이터(벡터)를 단일 DB에서 처리, 하이브리드 검색 최적화 |
-| Embedding | OpenAI Embedding (text-embedding-3-small) | 영문 기술 문서 벡터화 | 원천 데이터가 영문 기술 문서라 영어 임베딩 성능 검증된 모델로 검색 정확도 극대화 |
+| Embedding | Google gemini-embedding-001 (출력 768d 잠정 — ADR-003) | 영문 기술 문서 + 한국어 질의 벡터화 | 다국어 임베딩 지원·MRL 차원 선택(768/1536/3072) 가능. 최종 차원은 A9 검증 후 확정 |
 | Framework | LangGraph | Multi-Agent 작업 흐름·상태 제어 | 순환형 프로세스(참조 문서 재검색 루프) 구현 + 멀티 에이전트 상태 관리 최적화 |
 
-> 참고: 스키마의 embedding은 Vector(1536), Embedding 모델은 text-embedding-3-small로 기재되어 있음. (text-embedding-3-small 기본 차원과 스키마 차원 일치 여부는 검증 대상)
->
-> 참고(기획서 내부 불일치): 5.1 스키마 표에는 임베딩이 "Solar Embedding"으로, 5.3 기술 스택에는 "OpenAI Embedding (text-embedding-3-small)"로 엇갈리게 기재되어 있음. 재개발 시 임베딩 모델을 명확히 확정해야 함 (검증 대상).
+> 참고: 임베딩 모델·차원은 ADR-003에 따라 **gemini-embedding-001(출력 768d 잠정, MRL)**로 통일. 기존 기획서 내부 불일치(5.1 "Solar" vs 5.3 "OpenAI")는 ADR-003으로 해소. 최종 출력 차원(768/1536/3072)은 부록 A9 검증 후 확정.
 
 ---
 
@@ -178,6 +176,6 @@ metadata(JSONB) Key-Value 예시:
 | A6 | LangGraph 멀티에이전트 구조가 단일 RAG 대비 답변 품질을 높인다 | 멀티에이전트 vs 단순 RAG 비교 (품질·지연·비용) |
 | A7 | PostgreSQL pgvector가 이 규모·용도에 적합하다 | 매뉴얼 1종 규모에서 성능·구축 난이도. 대안(Chroma/FAISS) 대비 트레이드오프 |
 | A8 | 영문 매뉴얼 → 한국어 답변 번역·요약의 정확도가 실무 수준이다 | 전문 용어 훼손 없이 번역되는가? 오역 시 안전 리스크는? |
-| A9 | 임베딩 모델이 확정되어 있다 | 기획서가 Solar/OpenAI로 엇갈림 — 어느 것으로? 차원(1536) 일치하는가? |
+| A9 | 임베딩 모델이 확정되어 있다 | 기획서가 Solar/OpenAI로 엇갈림 — 어느 것으로? 차원(1536) 일치하는가? → ADR-003: Gemini `gemini-embedding-001`로 확정(768d 잠정). A9는 출력 차원(768/1536/3072) 비교로 재정의. |
 
 > 기획서의 기대 효과(MTTR 단축, 휴먼 에러 감소 등)는 정량 측정 전까지 **목표**이지 입증된 수치가 아니다. 자소서·발표 시 측정한 값만 사용한다.
