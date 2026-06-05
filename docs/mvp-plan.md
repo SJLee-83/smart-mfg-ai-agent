@@ -44,20 +44,16 @@
 - **Orchestrator Agent**: 사용자 의도 파악 후 하위 에이전트에게 업무 지시
 - **Specialist Agent**
   - **Retrieval Agent**: 매뉴얼 Vector DB에서 1차 답변 검색
-  - **Linker Agent**: 1차 답변 내 참조 문구를 감지하여 해당 섹션 내용을 재검색·병합
   - **Safety Agent**: 작업 내용과 연관된 안전 수칙을 최우선 확보
 
-### 3.2 핵심 차별점: 다중 문맥 인식 및 교차 참조 (Cross-Reference RAG)
-- **문제**: 기존 RAG는 "3.6절을 참조하세요"라는 텍스트만 보여주어 작업자가 다시 문서를 찾아야 하는 번거로움 존재
-- **해결 (Agent Workflow)**
-  - 에이전트가 답변 생성 전, 문서 내 하이퍼링크/참조 문구(See Section...)를 스스로 인식
-  - 관련된 하위 문서(Sub-document)까지 자동으로 찾아와 한 번에 요약 제공
-  - 결과적으로 참조 절을 다시 찾아볼 필요 없는 완결된 수리 가이드 제공
+### 3.2 핵심 차별점: 마커 기반 정교한 청킹 및 메타데이터 필터링
+- FANUC 매뉴얼의 `(Explanation)`/`(Action)` 마커를 활용해 **SRVO 1코드 = 1청크**로 구조화 청킹하고, `error_code`·`content_type`·`severity` 메타데이터로 정밀 검색한다.
+- (A2 검증 결과 기반: 마커 일관성 ~80% 실측 — ADR-002)
 
 ### 3.3 에이전트 협업 시나리오 요약
 1. **감지**: Orchestrator Agent가 질문에서 에러 코드(SRVO-214) 식별
 2. **1차 검색**: Retrieval Agent가 에러 원인·기본 조치 검색
-3. **심화 검색**: Linker Agent가 "Section 3.6 참조" 문구 발견 후 해당 챕터 상세 표(Table) 데이터 추가 확보
+3. **심화 검색**: Retrieval Agent가 `error_code`·`content_type`·`severity` 메타데이터로 관련 청크(상세 증상·조치)를 정밀 검색·확보 (See Section 자동 추적 제외 — ADR-002)
 4. **검증**: Safety Agent가 "전원 차단 필수" 안전 수칙 추가
 5. **응답**: 작업자에게 원인 + 상세 증상표 + 안전 수칙이 통합된 답변 전달
 
@@ -73,12 +69,10 @@
   - 단순 텍스트 검색이 아니라, "SRVO-062"의 경우 "배터리 교체"뿐 아니라 "마스터링(Mastering) 필요"라는 후속 조치까지 안내
   - 매뉴얼 본문에서 점검 순서·주의 문구를 함께 추출해 명확한 Step-by-Step 수리 가이드로 변환
 
-### 기능 2: 재귀적 정보 검색 및 교차 참조
+### 기능 2: 마커 기반 구조화 청킹
 - **기능 설명**
-  - 1차 검색된 답변 내에 "참조(See Section...)" 문구가 있을 경우, Agent가 해당 섹션을 자동 재검색하여 원문 + 참조 섹션 내용을 한 번에 통합하여 답변 생성
-- **구현 포인트**
-  - 예) SRVO-214 에러 설명 중 "(See Section 3.6)"이 포함되면, Agent가 해당 절의 상세 표/추가 설명까지 자동 조회·병합
-  - 사용자가 매뉴얼을 다시 열어볼 필요 없이 참조까지 포함된 One-Stop 수리 가이드 전달
+  - `(Explanation)`/`(Action)` 마커로 SRVO 코드 단위 청킹. 마커 없는 ~20% 페이지는 폴백 규칙 적용 (미구현, 검증 필요).
+  - (A2 검증 결과 기반 — ADR-002)
 
 ### 기능 3: 문맥 기반 안전 규정 자동 경고
 - **기능 설명**
@@ -108,12 +102,12 @@
 metadata(JSONB) Key-Value 예시:
 - `error_code`: "SRVO-062" (코드 기반 즉시 검색용)
 - `category`: "Troubleshooting" (문제 해결 챕터 한정)
-- `ref_section`: "3.4" (교차 참조를 위한 섹션 링크)
+- `ref_section`: "3.4" (향후 확장용 — 현재 미활용, ADR-002 참조)
 - `Severity`: "Warning" (안전 경고 여부)
 
 ### 5.2 구축 프로세스
 1. **PDF Parsing**: "3. TROUBLESHOOTING" 챕터의 테이블 구조를 인식하여 에러 코드 단위로 텍스트 추출
-2. **Enrichment**: 추출된 텍스트에 "Action" 단계별 번호와 참조 섹션(See Section 3.6)을 메타데이터로 태깅
+2. **Enrichment**: 추출된 텍스트에 "Action" 단계별 번호를 메타데이터로 태깅 (See Section 태깅 제외 — ADR-002)
 3. **Embedding**: OpenAI Embedding을 통해 텍스트를 벡터로 변환하여 PostgreSQL에 저장
 
 ### 5.3 핵심 기술 스택
@@ -176,7 +170,7 @@ metadata(JSONB) Key-Value 예시:
 
 | # | 검증 대상 가정 | 검증 질문 |
 |---|---|---|
-| A1 | Cross-Reference RAG가 참조 문구(See Section...)를 안정적으로 감지·재검색한다 | 매뉴얼의 참조 표현이 일관적인가? 감지 정확도는? 무한 루프·과다 참조 위험은? |
+| A1 | Cross-Reference RAG가 참조 문구(See Section...)를 안정적으로 감지·재검색한다 | 매뉴얼의 참조 표현이 일관적인가? 감지 정확도는? 무한 루프·과다 참조 위험은? → A2 검증 결과로 기각. See Section 패턴 3회뿐. ADR-002로 축소 결정. |
 | A2 | PDF Parsing이 TROUBLESHOOTING 테이블 구조를 에러 코드 단위로 정확히 추출한다 | FANUC 매뉴얼 PDF의 실제 구조에서 파싱이 되는가? 표 인식 정확도는? |
 | A3 | 자연어에서 에러 코드 추출이 정확하다 ("BZAL 알람" → SRVO-062) | 별칭·약어·오타 입력에서도 코드 매핑이 되는가? |
 | A4 | metadata 필터링(error_code, ref_section 등)이 검색 정확도를 실제로 높인다 | 메타데이터 유무에 따른 검색 정확도 차이 측정 |
