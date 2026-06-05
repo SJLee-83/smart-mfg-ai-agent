@@ -19,6 +19,10 @@ data/raw/*.csv
 data/private/
 *.csv.private
 
+# --- 실험 결과 출력물 ---
+# experiments 결과 출력물 (매뉴얼 원문 포함 가능, 재생성 가능한 파생물)
+experiments/**/result_*.txt
+
 # --- Python ---
 __pycache__/
 *.py[cod]
