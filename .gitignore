@@ -12,7 +12,10 @@
 *.key
 
 # --- 제조 데이터 (민감 가능성) ---
-data/raw/
+# data/raw/ 폴더 골격은 repo에 유지(.gitkeep), 원본 데이터 파일만 git 추적 제외
+data/raw/*.pdf
+data/raw/*.csv
+!data/raw/.gitkeep
 data/private/
 *.csv.private
 

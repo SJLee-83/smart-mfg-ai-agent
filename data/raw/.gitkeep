@@ -1,0 +1,3 @@
+# 이 파일은 data/raw/ 폴더 골격을 repo에 유지하기 위한 placeholder다.
+# 실제 원본 데이터(*.pdf, *.csv 등)는 .gitignore로 git 추적에서 제외된다.
+# 매뉴얼 PDF 경로는 .env의 MANUAL_PDF_PATH로 관리한다. (ADR-001 참조)
