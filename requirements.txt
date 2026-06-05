@@ -2,5 +2,8 @@
 pdfplumber>=0.11
 python-dotenv>=1.0
 
+# 임베딩/LLM (Gemini 신 SDK — ADR-003, A9 검증). 폐기된 google-generativeai는 미사용.
+google-genai>=1.0
+
 # 테스트
 pytest>=8.0
