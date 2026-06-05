@@ -117,7 +117,7 @@ metadata(JSONB) Key-Value 예시:
 | LLM | Gemini (구체 모델 A6 검증 후 확정 — ADR-003) | 영문 매뉴얼 내용 이해 + 한국어 실시간 번역·요약 답변 생성 | 추론·다국어 처리 능력으로 전문 용어 훼손 없이 자연스러운 한국어 가이드 제공 |
 | Vector DB | PostgreSQL (pgvector) | 대용량 매뉴얼 데이터 벡터 저장·검색 | 관계형 데이터(에러코드·메타데이터)와 비정형 데이터(벡터)를 단일 DB에서 처리, 하이브리드 검색 최적화 |
 | Embedding | Google gemini-embedding-001 (출력 768d 잠정 — ADR-003) | 영문 기술 문서 + 한국어 질의 벡터화 | 다국어 임베딩 지원·MRL 차원 선택(768/1536/3072) 가능. 최종 차원은 A9 검증 후 확정 |
-| Framework | LangGraph | Multi-Agent 작업 흐름·상태 제어 | 순환형 프로세스(참조 문서 재검색 루프) 구현 + 멀티 에이전트 상태 관리 최적화 |
+| Framework | LangGraph | Multi-Agent 작업 흐름·상태 제어 | 마커 기반 청킹 파이프라인 + 멀티 에이전트 상태 관리 최적화 (ADR-002) |
 
 > 참고: 임베딩 모델·차원은 ADR-003에 따라 **gemini-embedding-001(출력 768d 잠정, MRL)**로 통일. 기존 기획서 내부 불일치(5.1 "Solar" vs 5.3 "OpenAI")는 ADR-003으로 해소. 최종 출력 차원(768/1536/3072)은 부록 A9 검증 후 확정.
 
@@ -171,7 +171,7 @@ metadata(JSONB) Key-Value 예시:
 | A1 | Cross-Reference RAG가 참조 문구(See Section...)를 안정적으로 감지·재검색한다 | 매뉴얼의 참조 표현이 일관적인가? 감지 정확도는? 무한 루프·과다 참조 위험은? → A2 검증 결과로 기각. See Section 패턴 3회뿐. ADR-002로 축소 결정. |
 | A2 | PDF Parsing이 TROUBLESHOOTING 테이블 구조를 에러 코드 단위로 정확히 추출한다 | FANUC 매뉴얼 PDF의 실제 구조에서 파싱이 되는가? 표 인식 정확도는? |
 | A3 | 자연어에서 에러 코드 추출이 정확하다 ("BZAL 알람" → SRVO-062) | 별칭·약어·오타 입력에서도 코드 매핑이 되는가? |
-| A4 | metadata 필터링(error_code, ref_section 등)이 검색 정확도를 실제로 높인다 | 메타데이터 유무에 따른 검색 정확도 차이 측정 |
+| A4 | metadata 필터링(error_code, ref_section 등)이 검색 정확도를 실제로 높인다 | 메타데이터 유무에 따른 검색 정확도 차이 측정 (ref_section은 현재 미활용 — ADR-002 참조) |
 | A5 | Safety Agent가 위험 키워드를 감지해 적절한 안전 수칙을 매핑한다 | 위험 작업 누락·오탐 비율은? |
 | A6 | LangGraph 멀티에이전트 구조가 단일 RAG 대비 답변 품질을 높인다 | 멀티에이전트 vs 단순 RAG 비교 (품질·지연·비용) |
 | A7 | PostgreSQL pgvector가 이 규모·용도에 적합하다 | 매뉴얼 1종 규모에서 성능·구축 난이도. 대안(Chroma/FAISS) 대비 트레이드오프 |
