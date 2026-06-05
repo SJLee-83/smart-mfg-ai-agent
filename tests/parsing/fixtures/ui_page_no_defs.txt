@@ -1,0 +1,11 @@
+9.TESTSECTION MAINTENANCE B-99999EN-1/01
+(3) To open the history screen, press F3, [HIST].
+1 INTP-100 (SAMPLE, 1) some label
+2 SRVO-901 Teach pendant stop
+3 RESET
+4 SRVO-902 Robot not ready
+5 SYST-010 Power up
+[ TYPE ] ACTIVE CLEAR HELP
+The latest alarm is number 1.
+(4) To open the detail screen, press F5, [HELP].
+- 16 -

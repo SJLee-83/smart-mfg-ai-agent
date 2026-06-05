@@ -1,0 +1,25 @@
+9.TESTSECTION MAINTENANCE B-99999EN-1/01
+(11) SRVO-901 Alpha alarm (unit: x)
+(Explanation) The widget is loose. See the description about the Beta alarm (SRVO-801).
+(12) SRVO-902 Beta alarm (unit: x)
+(Explanation) The widget overheated due to vibration. See the Gamma item (SRVO-802).
+(Action 1) Tighten the widget bracket.
+(Action 2) Replace the widget.
+(13) SRVO-903 Gamma alarm (unit: x)
+(Explanation) The sensor signal is broken.
+(14) SRVO-904 Delta not ready
+(Explanation) The position cannot be set. See (SRVO-803).
+(Action 1) Reset and re-run the cycle.
+(15) SRVO-905 Hatch open or stop
+(Explanation) The cabinet hatch is open. Refer to this same alarm (SRVO-905).
+- When the switch is mounted.
+(Action 1) Close the hatch.
+(Action 2) Check the switch cable; replace it if faulty.
+- When the switch is not mounted.
+(Action 3) Check that the connectors are secure.
+(Action 4) Replace the stop unit.
+(Action 5) Replace the amplifier.
+Hatch unit
+Amplifier
+Fig.9.9 (a) SRVO-905 Hatch open or stop
+- 99 -

@@ -1,0 +1,6 @@
+# R-Mate 파싱 파이프라인 (src/parsing) 의존성
+pdfplumber>=0.11
+python-dotenv>=1.0
+
+# 테스트
+pytest>=8.0
