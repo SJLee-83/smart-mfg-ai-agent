@@ -40,6 +40,7 @@ chroma_db/
 *.index
 .chromadb/
 qdrant_storage/
+chroma_test_db/          # A7 검증 스크립트 테스트 DB (재생성·자동 삭제 대상)
 
 # --- LangChain/LangGraph 캐시 ---
 .langchain/
