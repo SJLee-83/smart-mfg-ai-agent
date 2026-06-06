@@ -5,6 +5,9 @@ python-dotenv>=1.0
 # 임베딩/LLM (Gemini 신 SDK — ADR-003, A9 검증). 폐기된 google-generativeai는 미사용.
 google-genai>=1.0
 
+# 벡터 DB (로컬 파일 기반 — ADR-004). src/index/chroma_store.py에서 사용.
+chromadb>=1.0
+
 # 그래프 오케스트레이션 (src/graph — 조건부 라우팅 상태 머신). langchain-core는 전이 의존.
 # LLM은 google-genai 직호출 유지(LangChain LLM 래퍼 미도입). 설계: docs/langgraph-multiagent.md
 langgraph>=0.2
