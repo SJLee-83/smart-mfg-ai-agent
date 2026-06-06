@@ -80,6 +80,32 @@ class ChromaStore:
             )
         return self.count()
 
+    def query(
+        self,
+        embedding: list[float],
+        n_results: int = 3,
+        where: dict | None = None,
+    ) -> dict:
+        """미리 계산된 쿼리 임베딩으로 유사도 검색을 수행한다.
+
+        적재 때와 동일 모델·동일 차원으로 만든 임베딩을 받아야 결과가 의미를 갖는다
+        (이 스토어는 자체 임베딩을 하지 않음 — _PrecomputedEmbeddingFunction 참고).
+
+        Args:
+            embedding: 쿼리 임베딩 벡터.
+            n_results: 반환할 최대 결과 수.
+            where: 메타데이터 필터(예: {"error_code": "SRVO-062"}). None이면 필터 없음.
+
+        Returns:
+            Chroma query 결과 dict(ids/documents/metadatas/distances). 각 값은
+            쿼리 1건 기준 list-of-lists 구조이므로 [0]이 실제 결과 리스트다.
+        """
+        return self._collection.query(
+            query_embeddings=[embedding],
+            n_results=n_results,
+            where=where,
+        )
+
     def count(self) -> int:
         """현재 저장된 청크 수."""
         return self._collection.count()
