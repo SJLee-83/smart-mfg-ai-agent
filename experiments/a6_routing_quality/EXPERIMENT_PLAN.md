@@ -1,10 +1,10 @@
 # A6 실험 설계 — 라우팅 정확도 & 비필터 재시도 오답률 측정
 
-- **상태**: 🟡 설계 완료, 구현 대기 (실행 스크립트 미작성)
+- **상태**: ✅ 구현·실행 완료 (2026-06-07) — `run_eval.py`/`dataset.jsonl` 작성, 결과는 [docs/validation/A6-routing-quality-eval.md](../../docs/validation/A6-routing-quality-eval.md)
 - **작성일**: 2026-06-06
 - **관련**: `src/graph/`(상태 머신), `docs/langgraph-multiagent.md` §6, [ADR-005](../../docs/decisions/ADR-005-langgraph-orchestration.md), [ADR-002](../../docs/decisions/ADR-002-cross-reference-rag-redefinition.md)
 
-> ⚠️ 이 문서는 **설계**다. 아직 측정하지 않았으므로 어떤 수치도 주장하지 않는다(CLAUDE.md §2). 측정 결과는 추후 `docs/validation/`에 별도 기록한다.
+> ⚠️ 이 문서는 **설계**다. 수치 주장은 여기서 하지 않는다(CLAUDE.md §2). 실측 결과·해석은 [docs/validation/A6-routing-quality-eval.md](../../docs/validation/A6-routing-quality-eval.md)에 기록했다.
 
 ---
 
@@ -58,9 +58,9 @@
   - 높으면 → fallback을 기본 비활성화하거나, 프롬프트 헤징(요청 코드 미일치 고지) 도입을 검증 대상으로 승격(설계 §6 보류 항목).
   - 낮으면 → 현행 fallback 유지 근거로 기록.
 
-## 6. 실행 방법 (구현 대기)
+## 6. 실행 방법
 
-- 추후 `experiments/a6_routing_quality/run_eval.py`로 구현 예정.
+- `experiments/a6_routing_quality/run_eval.py`로 구현됨. 실행: `.venv/Scripts/python.exe experiments/a6_routing_quality/run_eval.py`.
 - 개요: `dataset.jsonl` 로드 → 각 질의에 `agent.pipeline.ask()` 호출 → `retrieval_mode`·`sources` 수집 → M1/M2 집계 → 결과 표 출력(+ `results.json` 저장).
 - 비용: 25질의 × (임베딩 1 + LLM 1) 호출. 유료 티어 기준 소액. 캐싱은 선택.
 - 주의: 이 실험은 `experiments/`의 PoC다. 결과가 의미 있으면 정식 평가 하니스로 승격하고 결과를 `docs/validation/`에 기록한다.

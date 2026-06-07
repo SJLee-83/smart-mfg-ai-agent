@@ -1,0 +1,25 @@
+{"id": "A01", "group": "A_code", "query": "SRVO-001 비상정지가 떴어. 어떻게 풀어?", "requested_code": "SRVO-001", "expected_modes": ["filtered"]}
+{"id": "A02", "group": "A_code", "query": "SRVO-002 티치펜던트 비상정지 알람, 어떻게 해제해?", "requested_code": "SRVO-002", "expected_modes": ["filtered"]}
+{"id": "A03", "group": "A_code", "query": "SRVO-003 데드맨 스위치 알람이 떴는데 조치 방법 알려줘", "requested_code": "SRVO-003", "expected_modes": ["filtered"]}
+{"id": "A04", "group": "A_code", "query": "SRVO-006 핸드 파손 알람이 발생했어. 어떻게 처리해?", "requested_code": "SRVO-006", "expected_modes": ["filtered"]}
+{"id": "A05", "group": "A_code", "query": "SRVO-014 팬 모터 이상 알람 조치 방법은?", "requested_code": "SRVO-014", "expected_modes": ["filtered"]}
+{"id": "A06", "group": "A_code", "query": "SRVO-062 배터리 알람이 떴어. 어떻게 해야 해?", "requested_code": "SRVO-062", "expected_modes": ["filtered"]}
+{"id": "A07", "group": "A_code", "query": "SRVO-068 알람 원인과 조치를 알려줘", "requested_code": "SRVO-068", "expected_modes": ["filtered"]}
+{"id": "A08", "group": "A_code", "query": "SRVO-105 도어 오픈 알람, 어떻게 해결해?", "requested_code": "SRVO-105", "expected_modes": ["filtered"]}
+{"id": "A09", "group": "A_code", "query": "SRVO-214 서보 앰프 퓨즈 단선 알람 조치", "requested_code": "SRVO-214", "expected_modes": ["filtered"]}
+{"id": "A10", "group": "A_code", "query": "SRVO-230 체인 이상 알람이 떴어. 어떻게 해?", "requested_code": "SRVO-230", "expected_modes": ["filtered"]}
+{"id": "B01", "group": "B_nocode", "query": "조작반의 비상정지 버튼을 눌러서 멈췄는데 어떻게 풀어?", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-001"}
+{"id": "B02", "group": "B_nocode", "query": "티치펜던트 비상정지 버튼 때문에 정지됐어. 해제 방법은?", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-002"}
+{"id": "B03", "group": "B_nocode", "query": "데드맨 스위치를 제대로 안 잡았다고 알람이 나요", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-003"}
+{"id": "B04", "group": "B_nocode", "query": "안전 조인트가 부러진 것 같다는 핸드 파손 알람 조치법", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-006"}
+{"id": "B05", "group": "B_nocode", "query": "컨트롤러 백플레인의 팬 모터가 이상하다는 알람 해결법", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-014"}
+{"id": "B06", "group": "B_nocode", "query": "펄스코더 절대위치 백업 배터리가 방전됐다는 알람, 배터리 교체하면 돼?", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-062"}
+{"id": "B07", "group": "B_nocode", "query": "시리얼 펄스코더가 요청에 데이터 응답을 안 한다는 알람 원인", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-068"}
+{"id": "B08", "group": "B_nocode", "query": "캐비닛 도어가 열려서 알람이 났어. 어떻게 닫고 해결해?", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-105"}
+{"id": "B09", "group": "B_nocode", "query": "서보 앰프 퓨즈가 끊어졌어. 어떻게 조치해?", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-214"}
+{"id": "B10", "group": "B_nocode", "query": "이중 안전 신호가 불일치한다는 체인 이상 알람 조치 방법", "requested_code": null, "expected_modes": ["unfiltered"], "pair": "SRVO-230"}
+{"id": "C01", "group": "C_miss", "query": "SRVO-999 알람이 떴어. 배터리 관련인 것 같은데 조치법은?", "requested_code": "SRVO-999", "expected_modes": ["unfiltered_fallback", "none"]}
+{"id": "C02", "group": "C_miss", "query": "SRVO-998 서보 알람이 발생했어. 어떻게 해결해?", "requested_code": "SRVO-998", "expected_modes": ["unfiltered_fallback", "none"]}
+{"id": "C03", "group": "C_miss", "query": "SRVO-911 비상정지 관련 알람인데 어떻게 풀어?", "requested_code": "SRVO-911", "expected_modes": ["unfiltered_fallback", "none"]}
+{"id": "C04", "group": "C_miss", "query": "SRVO-500 펄스코더 알람 원인과 조치를 알려줘", "requested_code": "SRVO-500", "expected_modes": ["unfiltered_fallback", "none"]}
+{"id": "C05", "group": "C_miss", "query": "SRVO-007 알람 발생, 팬 모터 이상 같은데 확인 방법은?", "requested_code": "SRVO-007", "expected_modes": ["unfiltered_fallback", "none"]}
