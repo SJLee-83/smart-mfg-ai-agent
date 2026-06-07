@@ -78,6 +78,18 @@ def test_orchestrate_respects_caller_override():
     assert out["effective_code"] == "SRVO-999"
 
 
+def test_orchestrate_normalizes_lowercase_code():
+    # 소문자 입력도 정규형(대문자·하이픈)으로 변환해야 메타데이터 필터가 적중한다.
+    out = orchestrate({"query": "srvo-062 배터리 알람"})
+    assert out["effective_code"] == "SRVO-062"
+
+
+def test_orchestrate_normalizes_code_without_hyphen():
+    # 하이픈 누락 입력도 정규형으로 복원.
+    out = orchestrate({"query": "srvo062 배터리"})
+    assert out["effective_code"] == "SRVO-062"
+
+
 # --- retrieve ---
 
 

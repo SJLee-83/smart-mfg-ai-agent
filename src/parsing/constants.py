@@ -20,7 +20,12 @@ SEVERITY_HIGH_KEYWORDS: frozenset[str] = frozenset({"WARNING", "DANGER"})
 SEVERITY_MEDIUM_KEYWORDS: frozenset[str] = frozenset({"CAUTION", "NOTE"})
 
 # --- SRVO 코드 ---
-CODE_RE = re.compile(r"SRVO-\d{3}")  # 모든 코드 언급(괄호 무관) / 형식 검증용
+# 사용자 입력 감지용(관대): IGNORECASE + 하이픈 선택(SRVO-?)으로 'srvo-062'·'srvo062'도
+# 코드로 잡는다. 단 저장 메타데이터/필터값은 항상 정규형(대문자·하이픈)이어야 하므로,
+# 감지된 코드는 canonical_code()로 정규화한 뒤 써야 한다(소문자 그대로 필터하면 빗나감).
+# 주의: models.RawChunk 검증(fullmatch)도 이 패턴을 쓰므로 함께 관대해진다 — 단 파싱은
+# DEF_HEADER_RE(엄격·대문자)로만 코드를 추출하므로 실데이터에는 정규형만 들어온다.
+CODE_RE = re.compile(r"SRVO-?\d{3}", re.IGNORECASE)  # 코드 언급 감지(관대) / 형식 검증용
 # 정의 헤더: 행 선두 "(N) " 항목번호 + 괄호 없는 코드 = 청크 경계 키.
 # 괄호 안의 코드 "(SRVO-072)"(교차참조)나 "2 SRVO-002"(UI 리스트)는 매칭 안 됨.
 DEF_HEADER_RE = re.compile(
@@ -68,3 +73,17 @@ def detect_severity_hint(text: str) -> str:
     if _SEVERITY_WORD_RES[SEVERITY_MEDIUM].search(text):
         return SEVERITY_MEDIUM
     return SEVERITY_UNKNOWN
+
+
+def canonical_code(text: str) -> str:
+    """CODE_RE로 감지한 코드 문자열을 저장 메타데이터의 정규형 'SRVO-NNN'으로 변환.
+
+    CODE_RE가 IGNORECASE·하이픈 선택이라 'srvo-062'/'srvo062'도 매칭된다. 이를 그대로
+    메타데이터 필터(where={"error_code": ...})에 쓰면 대문자·하이픈 저장값과 어긋나
+    빗나가므로(=불필요한 unfiltered_fallback 유발), 숫자 3자리를 뽑아 정규형으로 재조립한다.
+    멱등: canonical_code("SRVO-062") == "SRVO-062".
+    """
+    digits = re.search(r"\d{3}", text)
+    if digits is None:
+        return text  # 방어적: 숫자 3자리 미발견(정상 흐름에선 CODE_RE 매칭이 보장)
+    return f"SRVO-{digits.group()}"

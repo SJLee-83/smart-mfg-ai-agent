@@ -2,8 +2,8 @@
 
 A6 본 측정(run_eval.py)은 '정상 형식' 입력에서 라우팅 정확도 100%를 보였다. 이
 스크립트는 그 한계를 직접 찌른다: 소문자/공백/오타/별칭/코드-only/복수코드 같은
-**변형 입력**에서 orchestrate의 코드 감지(CODE_RE = SRVO-\\d{3}, 대문자·하이픈
-고정, IGNORECASE 없음)가 어디서 깨지는지 본다. (검증 기록 §5 후속 과제)
+**변형 입력**에서 orchestrate의 코드 감지(CODE_RE = SRVO-?\\d{3}, IGNORECASE +
+canonical_code 정규화)가 어디서 깨지는지 본다. (검증 기록 §5 후속 과제)
 
 각 케이스마다 ask()를 호출해 retrieval_mode를 관측하고, 기대값과 PASS/FAIL 비교.
 검색(임베딩)은 실제 호출, 답변(LLM)은 스텁 — 라우팅만 측정하므로 답변 텍스트 불요.
@@ -14,6 +14,7 @@ A6 본 측정(run_eval.py)은 '정상 형식' 입력에서 라우팅 정확도 1
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -89,7 +90,8 @@ def run() -> bool:
     out("=" * 78)
     out("A6 후속 — 변형 입력 라우팅 견고성 테스트")
     out("=" * 78)
-    out(f"CODE_RE = {CODE_RE.pattern!r}  (대문자·하이픈 고정, IGNORECASE 없음)")
+    ignorecase = bool(CODE_RE.flags & re.IGNORECASE)
+    out(f"CODE_RE = {CODE_RE.pattern!r}  (IGNORECASE={ignorecase}, canonical_code 정규화 적용)")
     out("검색: 실제 Chroma/임베딩 호출 · 답변: 스텁(LLM 미호출)")
     out("")
 

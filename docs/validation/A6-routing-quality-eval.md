@@ -62,10 +62,55 @@
 ## 5. 설계 함의 (후속 검증 대상으로 승격)
 
 - **존재하지 않는 코드 처리**: 현재는 무관한 최근접 코드로 답변하고 `unfiltered_fallback` 라벨로만 경고한다. "매뉴얼에 없는 코드"임을 **명시 고지**하거나 `none`으로 끊는 편이 더 안전할 수 있다 → 프롬프트 헤징 또는 라우팅 보강을 검증 대상으로(EXPERIMENT_PLAN §5, langgraph-multiagent §6 보류 항목).
-- **라우팅 견고성**: 변형 코드 입력(공백/소문자/오타) 테스트셋으로 `CODE_RE`의 실패 모드 측정 필요.
+- **라우팅 견고성**: ✅ 측정·수정 완료 — §7 참조(소문자 버그 발견 → `IGNORECASE`+정규화 수정 → 9/9).
 - M1 충족으로 orchestrate 규칙 보강은 **현 시점 불요**(정상 입력 기준).
 
 ## 6. 비고 (보안·정직성)
 
 - `GOOGLE_API_KEY`는 `.env`(git-ignored)에서만 로드, 출력·커밋 안 함. 임베딩 25회 호출(유료 티어 소액), LLM 0회.
 - 이 측정은 **라우팅·출처**까지다. **답변 품질**(생성문 정확성·안전성)과 **검색 정확도**(올바른 청크 회수)는 별개 미검증 축이다. "라우팅이 의도대로 분기함"과 "답변/검색이 정확함"을 구분한다.
+
+## 7. 후속 측정 — 변형 입력 라우팅 견고성 (2026-06-07)
+
+§4·§5에서 "M1 100%는 정상 형식 입력 한정"이라 적은 한계를 직접 측정했다. 도구: `experiments/a6_routing_quality/run_robustness_eval.py`(9케이스, 검색 실호출·답변 스텁). 측정 중 **소문자 입력 버그를 발견·수정**했다.
+
+### 수정 전: 7/9 PASS
+
+FAIL 2건 모두 **소문자 입력**:
+
+| 입력 | 기대 | 실제(수정 전) |
+|---|---|---|
+| `srvo-062 배터리 알람` | filtered | **unfiltered** |
+| `srvo062 배터리` | filtered | **unfiltered** |
+
+원인: `CODE_RE = SRVO-\d{3}`가 **대소문자 구분 + 하이픈 필수**라 소문자/하이픈 누락 코드를 미감지 → `effective_code=None` → unfiltered. **크래시는 없으나 필터 검색 이점을 조용히 상실.**
+
+### 수정: `CODE_RE` 관대화 + 정규화
+
+```python
+# src/parsing/constants.py
+CODE_RE = re.compile(r"SRVO-?\d{3}", re.IGNORECASE)   # 대소문자·하이픈 누락 허용
+def canonical_code(text): ...                         # 감지 코드 → "SRVO-NNN" 정규형
+# src/graph/nodes.py orchestrate: code = canonical_code(match.group(0))
+```
+
+**중요(정직 기록): `re.IGNORECASE` 추가만으로는 9/9가 불가능**했다(실측 확인). 소문자로 매칭해도 매칭 텍스트가 소문자 그대로면 메타데이터 필터(대문자 저장)가 빗나가 `unfiltered_fallback`이 된다. 따라서 (1) 정규식 IGNORECASE + 선택적 하이픈, (2) `canonical_code()`로 감지 코드를 `SRVO-NNN` 정규형으로 변환하는 두 단계를 모두 거쳐야 `filtered`가 된다.
+
+### 수정 후: 9/9 PASS
+
+| 케이스 | 수정 전 | 수정 후 |
+|---|---|---|
+| 소문자 2건 (`srvo-062`, `srvo062`) | FAIL (unfiltered) | **PASS (filtered)** |
+| 오타 2건 (`SRVO-06 2` 공백, `SRV0-062` O→0) | PASS (unfiltered) | PASS |
+| 별칭/증상 2건 (`BZAL`, `배터리 방전`) | PASS (unfiltered) | PASS |
+| 코드만 2건 (`SRVO-062`, `SRVO-105`) | PASS (filtered) | PASS |
+| 복수코드 1건 (첫 코드 감지) | PASS (filtered) | PASS |
+
+기존 pytest **61 → 63개 통과**(orchestrate 정규화 회귀 테스트 2개 추가, 기존 테스트 무회귀).
+
+### 한계 (정직 기록)
+
+- **오타는 여전히 미복구**(의도된 설계): `SRVO-06 2`(공백 삽입)·`SRV0-062`(O→0)는 unfiltered로 빠진다. 오타 교정은 구현하지 않았다 — 다만 이들은 "엉뚱한 코드로 오인하지 않고 일반 검색으로 폴백"하므로 **안전한 실패**다.
+- **별칭→코드 매핑 미구현**: `BZAL`(SRVO-062 알람 약어) 같은 별칭은 코드로 해석되지 않고 의미 검색(unfiltered)에 의존한다. 별칭 사전은 없음.
+- 9케이스는 **소표본** — 모든 변형(다국어 혼용, 코드 다중 표기 등)을 망라하지 않는다.
+- 원시 출력: `experiments/a6_routing_quality/result_robustness.txt`(gitignore: `result_*.txt`).

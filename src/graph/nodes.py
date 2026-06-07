@@ -15,7 +15,7 @@ from collections.abc import Callable
 
 from agent.answer_generator import NO_CONTEXT_MESSAGE, generate_answer
 from parsing import Chunk
-from parsing.constants import CODE_RE
+from parsing.constants import CODE_RE, canonical_code
 
 from .state import GraphState
 
@@ -40,12 +40,13 @@ def orchestrate(state: GraphState) -> dict:
     """질의에서 에러코드를 도출하고 재시도 가드를 초기화한다(규칙 기반, LLM 없음).
 
     effective_code가 이미 있으면(caller override) 그대로 두고, 없을 때만
-    CODE_RE로 query에서 추출한다.
+    CODE_RE로 query에서 추출한다. 추출한 코드는 canonical_code로 정규형(대문자·
+    하이픈)으로 변환해야 메타데이터 필터가 빗나가지 않는다('srvo-062'→'SRVO-062').
     """
     code = state.get("effective_code")
     if not code:
         match = CODE_RE.search(state["query"])
-        code = match.group(0) if match else None
+        code = canonical_code(match.group(0)) if match else None
     return {"effective_code": code, "retried": False}
 
 
