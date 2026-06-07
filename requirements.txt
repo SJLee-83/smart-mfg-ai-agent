@@ -12,5 +12,8 @@ chromadb>=1.0
 # LLM은 google-genai 직호출 유지(LangChain LLM 래퍼 미도입). 설계: docs/langgraph-multiagent.md
 langgraph>=0.2
 
+# 데모 UI (app.py — agent.pipeline.ask() 호출하는 Streamlit 프런트엔드)
+streamlit>=1.40
+
 # 테스트
 pytest>=8.0
