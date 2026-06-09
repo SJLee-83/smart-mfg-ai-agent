@@ -6,6 +6,18 @@
 
 ---
 
+## 데모
+
+Streamlit 데모 UI에 알람 코드나 증상을 입력하면, 매뉴얼 근거로 **안전을 우선한 한국어 조치 가이드**를 생성합니다.
+
+![알람 코드 질의와 조치 가이드](docs/images/demo-query.png)
+
+조치 절차와 함께 **검색 모드(`filtered`)·출처(에러코드·매뉴얼 페이지·파싱 방식)**를 표기합니다.
+
+![조치 절차와 출처 표기](docs/images/demo-sources.png)
+
+---
+
 ## 주요 특징 (검증된 것만)
 
 - **구조화 청킹** — PDF에서 `(Explanation)`/`(Action)` 마커를 기준으로 **SRVO 1코드 = 1청크**로 분할합니다. 실측 매뉴얼 261페이지에서 마커 일관성 ~80%(`(Explanation)` 79.6%, `(Action)` 81.6%)를 확인한 뒤 채택했습니다([ADR-002](docs/decisions/ADR-002-cross-reference-rag-redefinition.md)). 결과는 261p → **93청크**입니다.
