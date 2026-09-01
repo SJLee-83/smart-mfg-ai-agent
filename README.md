@@ -84,7 +84,7 @@ src/
 └── graph/      # LangGraph 조건부 라우팅 상태 머신(검색 → 답변 + 재시도)
 ```
 
-검증 기록은 `docs/validation/`, 아키텍처 의사결정은 `docs/decisions/`(ADR), PoC 는 `experiments/`.
+검증 기록은 `docs/validation/`, 아키텍처 의사결정은 `docs/decisions/`(ADR), PoC 는 `experiments/`. 문서·표기 규약은 [`docs/conventions.md`](docs/conventions.md).
 
 ---
 

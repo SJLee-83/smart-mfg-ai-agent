@@ -121,7 +121,7 @@ def tag(chunks: list[RawChunk]) -> list[Chunk]: ...
 ### 2.4 결정 D (severity) - **변경: 기본값 UNKNOWN (사용자 사인오프 필요)**
 - **원안**: WARNING→HIGH, CAUTION→MEDIUM, **기본 MEDIUM**.
 - **변경안(팀 권장)**: 값 `{HIGH, MEDIUM, UNKNOWN}`, **기본 UNKNOWN**. 매핑 `WARNING/DANGER→HIGH`, `CAUTION/NOTE→MEDIUM`, 키워드 없음→`UNKNOWN`. 동시 등장 시 HIGH 우선.
-- **근거**: "기본 MEDIUM"은 없는 심각도를 **날조** → `where severity=MEDIUM` 필터가 무키워드 청크와 진짜 MEDIUM을 섞음. UNKNOWN은 "표기된 심각도 미검출"을 정직하게 보존(비용 0). CLAUDE.md "측정한 것만 주장" 부합.
+- **근거**: "기본 MEDIUM"은 없는 심각도를 **날조** → `where severity=MEDIUM` 필터가 무키워드 청크와 진짜 MEDIUM을 섞음. UNKNOWN은 "표기된 심각도 미검출"을 정직하게 보존(비용 0). `docs/conventions.md` §2 "측정한 것만 주장" 부합.
 - **정직성 기록(필수 동반)**: *"severity는 안전고지어(WARNING/CAUTION) 기반 키워드 휴리스틱이며, 매뉴얼의 네이티브 알람 심각도(STOP/SERVO/WARN/PAUSE…)가 아니다. 정밀도 미검증(A5 관련). 표기는 '키워드 기반 severity 태거, 정밀도 미측정'."*
 - **확정(2026-06-05, 사용자 사인오프)**: 필드명 = **`severity_hint`**, 기본값 = **UNKNOWN**. 이름 자체가 휴리스틱임을 표시. 키워드셋은 미검증(A5)이라 `constants.py`에 "preliminary" 주석.
 

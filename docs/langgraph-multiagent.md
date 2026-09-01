@@ -14,7 +14,7 @@
 - 단일 턴·무상태이므로 목표 지속/반복 계획 같은 자율성 없음
 - "Retrieval/Answer"는 기존 `Retriever.search`/`generate_answer`를 감싼 **노드**다. 그래프 내 LLM 호출은 답변 노드 1곳뿐.
 
-[ADR-002](decisions/ADR-002-cross-reference-rag-redefinition.md)에서 과장된 "Cross-Reference RAG" 명칭을 실측으로 축소한 것과 같은 원칙(CLAUDE.md §2)의 적용. **정직한 명칭 천장과 금지 주장 목록은 §6에 배치**하며 이 문서의 서술도 그 목록을 준수(노드/상태 머신/규칙 기반 라우팅으로 기술).
+[ADR-002](decisions/ADR-002-cross-reference-rag-redefinition.md)에서 과장된 "Cross-Reference RAG" 명칭을 실측으로 축소한 것과 같은 규약(`docs/conventions.md` §2)의 적용. **정직한 명칭 천장과 금지 주장 목록은 §6에 배치**하며 이 문서의 서술도 그 목록을 준수(노드/상태 머신/규칙 기반 라우팅으로 기술).
 
 ---
 
@@ -263,7 +263,7 @@ src/graph/
 
 **보류 항목(item 8 - 프롬프트 디스클레이머)**: fallback일 때 answer 노드가 "요청 코드 정확 일치 없음" 한국어 고지를 후첨하는 방안. v1 제외. 구현 시: `generate_answer` 미수정 원칙(전제 #7) 유지 위해 노드 레벨 후첨. **포인터(architect)**: 코드 필드가 1개라 clear_filter가 effective_code를 비우므로, 디스클레이머 시점에 `CODE_RE.search(query)`로 요청 코드를 **재추출**하면 됨(필드 재도입 불필요).
 
-**후속 검증(측정 전 주장 금지 - CLAUDE.md §2)**:
+**후속 검증(측정 전 주장 금지 - `docs/conventions.md` §2)**:
 1. **라우팅 정확도**: 정규식/0건 라우터가 올바른 가지를 고르는가. 라벨드 질의셋(코드有/코드無/모호)로 오라우팅률 측정.
 2. **재시도의 답변 품질 영향(핵심)**: 필터미스 질의에서 비필터 재시도가 정답을 돕는가 vs 오답(엉뚱 코드) 유발률. `unfiltered_fallback` 경로의 위험을 정량화하기 전엔 "fallback 경로"일 뿐 "품질 개선"이 아님.
 3. **키워드 의도 추출 정밀도**: CODE_RE 외 키워드 라우팅을 추가할 경우(현재 미도입) 정밀/재현 미측정.

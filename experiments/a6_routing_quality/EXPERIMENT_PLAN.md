@@ -4,7 +4,7 @@
 - **작성일**: 2026-06-06
 - **관련**: `src/graph/`(상태 머신), `docs/langgraph-multiagent.md` §6, [ADR-005](../../docs/decisions/ADR-005-langgraph-orchestration.md), [ADR-002](../../docs/decisions/ADR-002-cross-reference-rag-redefinition.md)
 
-> 이 문서는 **설계** 문서로 수치 주장 없음(CLAUDE.md §2). 실측 결과·해석은 [docs/validation/A6-routing-quality-eval.md](../../docs/validation/A6-routing-quality-eval.md)에 기록.
+> 이 문서는 **설계** 문서로 수치 주장 없음(`docs/conventions.md` §2). 실측 결과·해석은 [docs/validation/A6-routing-quality-eval.md](../../docs/validation/A6-routing-quality-eval.md)에 기록.
 
 ---
 
