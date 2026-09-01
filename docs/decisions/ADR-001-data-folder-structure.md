@@ -1,4 +1,4 @@
-# ADR-001: 데이터 폴더 구조 — `data/raw/` 골격 유지 + 원본 데이터 git 제외
+# ADR-001: 데이터 폴더 구조 - `data/raw/` 골격 유지 + 원본 데이터 git 제외
 
 - **상태(Status)**: 채택(Accepted)
 - **날짜**: 2026-06-05
@@ -8,7 +8,7 @@
 
 ## 맥락(Context)
 
-매뉴얼 PDF(`R30iA-Mate-Controller-Maintenance-Manual.pdf`, 약 7.4MB)를 RAG 입력으로 사용해야 한다.
+매뉴얼 PDF(`R30iA-Mate-Controller-Maintenance-Manual.pdf`, 약 7.4MB)를 RAG 입력으로 사용.
 원본 데이터를 어디에 두고, git에 어떻게 다룰지 결정이 필요하다.
 
 제약·전제:
@@ -18,11 +18,11 @@
 
 ## 결정(Decision)
 
-`data/raw/` 폴더를 repo 구조 안에 두되, **원본 데이터 파일은 git 추적에서 제외**한다.
+`data/raw/` 폴더를 repo 구조 안에 두되 **원본 데이터 파일은 git 추적에서 제외**.
 
-- 폴더 골격은 `data/raw/.gitkeep`으로 repo에 유지한다.
-- 원본 데이터 파일(`*.pdf`, `*.csv`)은 `.gitignore`로 추적 제외한다.
-- 매뉴얼 PDF 경로는 하드코딩하지 않고 **`.env`의 `MANUAL_PDF_PATH`** 로 관리한다.
+- 폴더 골격은 `data/raw/.gitkeep`으로 repo에 유지
+- 원본 데이터 파일(`*.pdf`, `*.csv`)은 `.gitignore`로 추적 제외
+- 매뉴얼 PDF 경로는 하드코딩 없이 **`.env`의 `MANUAL_PDF_PATH`** 로 관리
   (`.env.example`에 키와 기본 경로를 템플릿으로 남김)
 
 ### `.gitignore` 패턴
@@ -33,18 +33,18 @@ data/raw/*.csv
 !data/raw/.gitkeep
 ```
 
-## 검증 기록 — `.gitkeep` 함정 (중요)
+## 검증 기록 - `.gitkeep` 함정 (중요)
 
-처음 안은 "`.gitignore`에서 `data/raw/` 전체를 무시 + `data/raw/.gitkeep`으로 골격 유지"였다.
-**이 조합은 작동하지 않는다.**
+처음 안은 "`.gitignore`에서 `data/raw/` 전체를 무시 + `data/raw/.gitkeep`으로 골격 유지".
+**이 조합은 작동 불가.**
 
 `git check-ignore -v data/raw/.gitkeep` 실측 결과, `.gitkeep` 자체가 `data/raw/` 규칙에
 의해 무시되었다(exit 0). git은 제외된 디렉터리 내부로 진입하지 않으므로, 부모 디렉터리가
-통째로 무시되면 그 안의 파일은 `!` 부정 패턴으로도 다시 추적할 수 없다.
+통째로 무시되면 그 안의 파일은 `!` 부정 패턴으로도 재추적 불가.
 
 → 그래서 디렉터리 전체 무시(`data/raw/`)가 아니라 **파일 단위 무시(`data/raw/*.pdf`,
 `data/raw/*.csv`)** 로 바꿔, 디렉터리는 추적 대상으로 남기고 그 안의 원본 데이터 파일만
-제외하는 방식을 채택했다. 이렇게 하면 `.gitkeep`은 어떤 무시 패턴에도 걸리지 않아 정상
+제외하는 방식을 채택. 이 경우 `.gitkeep`은 어떤 무시 패턴에도 걸리지 않아 정상
 추적된다(`!data/raw/.gitkeep`는 의도를 명시하는 방어적 선언).
 
 ## 결과(Consequences)
@@ -63,8 +63,8 @@ data/raw/*.csv
 
 ## 고려한 대안(Alternatives considered)
 
-1. **`data/raw/` 전체 무시 + `.gitkeep`** — 위 "검증 기록"대로 작동하지 않아 기각.
-2. **`data/raw/*` 전체 무시 + `!data/raw/.gitkeep`** — 폴더 내 모든 파일을 무시하는
+1. **`data/raw/` 전체 무시 + `.gitkeep`** - 위 "검증 기록"대로 작동하지 않아 기각.
+2. **`data/raw/*` 전체 무시 + `!data/raw/.gitkeep`** - 폴더 내 모든 파일을 무시하는
    가장 강한 안전망. 채택안보다 안전하지만, 현재는 사용자가 확장자 한정 방식을 명시 선택.
    향후 다양한 원본 데이터가 들어오면 이 패턴으로 전환 검토.
-3. **원본 PDF를 repo에 커밋** — 공개 repo 데이터 노출 위험 + 저장소 비대화로 기각.
+3. **원본 PDF를 repo에 커밋** - 공개 repo 데이터 노출 위험 + 저장소 비대화로 기각.
