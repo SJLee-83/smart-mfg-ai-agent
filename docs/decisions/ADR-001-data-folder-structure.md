@@ -9,7 +9,7 @@
 ## 맥락(Context)
 
 매뉴얼 PDF(`R30iA-Mate-Controller-Maintenance-Manual.pdf`, 약 7.4MB)를 RAG 입력으로 사용.
-원본 데이터를 어디에 두고, git에 어떻게 다룰지 결정이 필요하다.
+원본 데이터의 위치와 git 취급 방식 결정 필요.
 
 제약·전제:
 - 매뉴얼 1종, 단독 작업

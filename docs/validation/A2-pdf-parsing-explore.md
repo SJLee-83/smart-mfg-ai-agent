@@ -4,7 +4,7 @@
 - **검증 대상 가정(A2)**: 매뉴얼 PDF 파싱으로 SRVO 알람 지식베이스 구축 가능
 - **검증 스크립트**: `experiments/a2_pdf_parsing/explore_pdf_structure.py`
 - **대상 문서**: `R30iA-Mate-Controller-Maintenance-Manual.pdf` (FANUC, B-82725EN-2/06)
-- **상태**: 🟡 부분 완료 - 1차 탐색 완료, 후속 측정(analyze) 1차 수행됨, 해석·설계 반영 진행 중
+- **상태**: 부분 완료 - 1차 탐색 완료, 후속 측정(analyze) 1차 수행됨, 해석·설계 반영 진행 중
 
 ---
 
