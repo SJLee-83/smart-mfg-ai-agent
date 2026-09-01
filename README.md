@@ -1,18 +1,47 @@
-# 스마트 제조 AI Agent — FANUC 설비 에러 진단
+# R-Mate - FANUC 설비 에러 진단 AI 에이전트
 
-> **FANUC R-30iA Mate Controller 유지보수 매뉴얼 기반 RAG + LangGraph 상태 머신으로 설비 에러를 진단하고 한국어 수리 가이드를 생성하는 AI 에이전트**
+> FANUC R-30iA Mate Controller 유지보수 매뉴얼 기반 RAG + LangGraph 상태 머신으로 설비 알람을 진단하고 한국어 수리 가이드를 생성하는 에이전트.
 
-작업자가 설비 알람 코드(예: `SRVO-062`)나 증상을 자연어로 물으면, 매뉴얼 근거를 검색해 **안전 주의사항을 우선한 한국어 조치 가이드**를 출처와 함께 생성합니다.
+작업자가 알람 코드(예: `SRVO-062`)나 증상을 자연어로 질의하면 매뉴얼 근거를 검색해 **안전 주의사항을 우선한 한국어 조치 가이드**를 출처와 함께 생성.
+
+---
+
+## 개발 계보
+
+스마트 제조 AI Agent 해커톤 2025(주최 DACON) 본선 결과물의 개념을 계승해 기술 스택과 데이터를 검증한 뒤 처음부터 다시 구현. 원본 코드 미반입.
+
+```mermaid
+flowchart LR
+    H["해커톤 원본 (2025.12, 팀 팩토리 닥터)<br/>기획·MVP 설계: 이승재<br/>구현: 팀원"]
+    V["검증 (2026.05)<br/>기술 스택·데이터 PoC<br/>ADR-002 ~ 005"]
+    R["재개발 (2026.05.25 ~ 06.09, 단독)<br/>이 저장소"]
+
+    H --> V --> R
+```
+
+| 구분 | 해커톤 원본 | 재개발 (이 저장소) |
+|---|---|---|
+| 저장소 | [factory_doctor-fanuc_agent](https://github.com/YuYeongChan/factory_doctor-fanuc_agent) (팀원 계정) | 이 저장소 |
+| 담당 | 기획 · FANUC 도메인 한정 · MVP 기획서 리드. 구현은 팀원 주도 | 기획 재정의부터 구현 · 테스트까지 단독 |
+| 청킹 | 정규식 `SRVO-xxx` 블록 분리, 일부 페이지 | `(Explanation)`/`(Action)` 마커 기반 1코드 1청크, 261p 전체 → 93청크 |
+| 임베딩 | `all-MiniLM-L6-v2` 384d (로컬) | `gemini-embedding-001` 768d |
+| 벡터 DB | PostgreSQL + pgvector | Chroma (로컬 파일) |
+| 오케스트레이션 | FastAPI `/diagnose` 단일 경로 | LangGraph 조건부 라우팅 + 1회 재시도 |
+| 검증 | 없음 | PoC 선행, 통과분만 구현. 테스트 63개 |
+
+원본 기획의 핵심 차별점이던 Cross-Reference RAG 는 재개발 검증에서 근거 희소(261p 중 `See Section` 3회)로 기각하고 기능을 재정의([ADR-002](docs/decisions/ADR-002-cross-reference-rag-redefinition.md)). 임베딩·LLM 은 기획서 내 불일치(Solar 대 OpenAI)를 해소하며 Gemini 단일 스택으로 전환([ADR-003](docs/decisions/ADR-003-llm-embedding-gemini.md)), 벡터 DB 는 청크 규모(약 100개)에 맞춰 pgvector 에서 Chroma 로 교체([ADR-004](docs/decisions/ADR-004-vector-db-chroma.md)).
+
+해커톤 증빙은 원본 저장소의 예선 기획서 · 본선 진출 인증서 · [시연 영상](https://youtu.be/zN9MBUtZLR4) 참조.
 
 ---
 
 ## 데모
 
-Streamlit 데모 UI에 알람 코드나 증상을 입력하면, 매뉴얼 근거로 **안전을 우선한 한국어 조치 가이드**를 생성합니다.
+Streamlit 데모 UI(`app.py`)에 알람 코드나 증상을 입력하면 매뉴얼 근거로 한국어 조치 가이드 생성.
 
 ![알람 코드 질의와 조치 가이드](docs/images/demo-query.png)
 
-조치 절차와 함께 **검색 모드(`filtered`)·출처(에러코드·매뉴얼 페이지·파싱 방식)**를 표기합니다.
+조치 절차와 함께 검색 모드(`filtered`) · 출처(에러코드 · 매뉴얼 페이지 · 파싱 방식) 표기.
 
 ![조치 절차와 출처 표기](docs/images/demo-sources.png)
 
@@ -20,11 +49,11 @@ Streamlit 데모 UI에 알람 코드나 증상을 입력하면, 매뉴얼 근거
 
 ## 주요 특징 (검증된 것만)
 
-- **구조화 청킹** — PDF에서 `(Explanation)`/`(Action)` 마커를 기준으로 **SRVO 1코드 = 1청크**로 분할합니다. 실측 매뉴얼 261페이지에서 마커 일관성 ~80%(`(Explanation)` 79.6%, `(Action)` 81.6%)를 확인한 뒤 채택했습니다([ADR-002](docs/decisions/ADR-002-cross-reference-rag-redefinition.md)). 결과는 261p → **93청크**입니다.
-- **벡터 검색** — `gemini-embedding-001`(768d) 임베딩과 **Chroma** 로컬 벡터 DB를 사용합니다. 93청크 인덱싱을 마쳤고, 에러코드·페이지 등 메타데이터를 함께 저장해 필터 검색을 지원합니다.
-- **LangGraph 조건부 라우팅** — 질의에서 에러코드를 **규칙 기반(정규식)으로 자동 감지**해, 코드가 있으면 메타데이터 필터 검색을, 없으면 일반 검색을 수행합니다. **필터 검색이 0건이면 필터를 풀고 1회 재시도(bounded retry)**하며, 그래도 0건이면 LLM 호출 없이 조기 종료합니다. ([설계](docs/langgraph-multiagent.md), [ADR-005](docs/decisions/ADR-005-langgraph-orchestration.md))
-- **LLM 답변** — `gemini-2.5-flash`로 매뉴얼 발췌에 근거한 **한국어 안전 우선 수리 가이드**를 생성합니다. 답변과 함께 출처(error_code·page·검색 모드)를 반환합니다.
-- **테스트** — 단위·통합 테스트 **63개를 통과**했습니다. 각 그래프 노드는 의존성 주입으로 독립적으로 테스트합니다.
+- **구조화 청킹**: PDF 에서 `(Explanation)`/`(Action)` 마커를 기준으로 SRVO 1코드 = 1청크 분할. 261페이지 실측에서 마커 일관성 약 80%(`(Explanation)` 79.6%, `(Action)` 81.6%) 확인 후 채택([ADR-002](docs/decisions/ADR-002-cross-reference-rag-redefinition.md)). 결과 261p → 93청크
+- **벡터 검색**: `gemini-embedding-001`(768d) 임베딩과 Chroma 로컬 벡터 DB. 93청크 인덱싱 완료, 에러코드 · 페이지 메타데이터 동반 저장으로 필터 검색 지원
+- **LangGraph 조건부 라우팅**: 질의에서 에러코드를 정규식으로 감지해 코드가 있으면 메타데이터 필터 검색, 없으면 일반 검색. 필터 검색 0건이면 필터를 풀고 1회 재시도(bounded retry), 그래도 0건이면 LLM 호출 없이 조기 종료([설계](docs/langgraph-multiagent.md), [ADR-005](docs/decisions/ADR-005-langgraph-orchestration.md))
+- **LLM 답변**: `gemini-2.5-flash` 로 매뉴얼 발췌에 근거한 한국어 안전 우선 수리 가이드 생성. 출처(error_code · page · 검색 모드) 동반 반환
+- **테스트**: 단위 · 통합 63개 통과. 각 그래프 노드는 의존성 주입으로 독립 테스트
 
 ---
 
@@ -33,13 +62,14 @@ Streamlit 데모 UI에 알람 코드나 증상을 입력하면, 매뉴얼 근거
 | 영역 | 사용 기술 |
 |---|---|
 | 언어 | Python 3.12 |
-| 그래프 오케스트레이션 | LangGraph 1.2 (`StateGraph`, 조건부 라우팅) |
-| LLM·임베딩 | google-genai (Gemini: `gemini-2.5-flash`, `gemini-embedding-001`) |
+| 그래프 오케스트레이션 | LangGraph (`StateGraph`, 조건부 라우팅) |
+| LLM · 임베딩 | google-genai (`gemini-2.5-flash`, `gemini-embedding-001`) |
 | PDF 파싱 | pdfplumber |
 | 벡터 DB | ChromaDB (로컬 파일 기반) |
+| 데모 UI | Streamlit |
 | 테스트 | pytest |
 
-> LLM(`gemini-2.5-flash`)·임베딩 모델은 비용/속도 균형 기준의 **잠정 선택**이며, 정량 비교(A6)는 후속 검증 대상입니다.
+LLM · 임베딩 모델은 비용 · 속도 균형 기준의 잠정 선택이며 정량 비교(A6 잔여)는 후속 검증 대상.
 
 ---
 
@@ -47,21 +77,22 @@ Streamlit 데모 UI에 알람 코드나 증상을 입력하면, 매뉴얼 근거
 
 ```
 src/
-├── parsing/    # PDF 로드·노이즈 제거 → 마커 기반 SRVO 청킹 → 메타데이터 태깅 (→ Chunk)
+├── parsing/    # PDF 로드·노이즈 제거 → 마커 기반 SRVO 청킹 → 메타데이터 태깅
 ├── index/      # Chunk 임베딩(gemini-embedding-001) + Chroma 적재 파이프라인
 ├── retrieval/  # 쿼리 임베딩 + Chroma 유사도 검색(에러코드 메타데이터 필터)
 ├── agent/      # LLM 답변 생성(gemini-2.5-flash, 안전 우선 프롬프트) + ask() 진입점
-└── graph/      # LangGraph 조건부 라우팅 상태 머신(검색→답변 오케스트레이션 + 재시도)
+└── graph/      # LangGraph 조건부 라우팅 상태 머신(검색 → 답변 + 재시도)
 ```
 
-검증 기록은 `docs/validation/`, 아키텍처 의사결정은 `docs/decisions/`(ADR), PoC는 `experiments/`에 있습니다.
+검증 기록은 `docs/validation/`, 아키텍처 의사결정은 `docs/decisions/`(ADR), PoC 는 `experiments/`.
 
 ---
 
 ## 구현 노트
 
-- **RAG 파이프라인** — 파싱(PDF → 청크) → 인덱싱(`gemini-embedding-001` 임베딩 + Chroma 적재) → 검색(쿼리 임베딩 + 에러코드 메타데이터 필터) → 답변 생성(`gemini-2.5-flash`)의 단계를 직접 구성했습니다. 이 흐름과 재시도·조기 종료는 LangGraph 상태 머신으로 묶었고, 외부 진입점은 `ask()`(`src/agent/pipeline.py`) 하나입니다.
-- **의존성 주입 + 테스트** — `ask()`와 `build_graph()`가 검색기(`Retriever`)와 LLM 클라이언트를 인자로 받도록 설계했습니다(`make_retrieve`/`make_answer` 클로저 팩토리로 노드에 주입). 실제 실행에서는 기본 객체를 생성하고, 테스트에서는 가짜 검색기·클라이언트를 주입해 Chroma·Gemini를 호출하지 않고 각 노드를 독립적으로 검증합니다. 라우팅 분기 같은 순수 함수는 그대로 단위 테스트해, 단위·통합 합계 63개를 구성했습니다.
+- **RAG 파이프라인**: 파싱(PDF → 청크) → 인덱싱(`gemini-embedding-001` 임베딩 + Chroma 적재) → 검색(쿼리 임베딩 + 에러코드 메타데이터 필터) → 답변 생성(`gemini-2.5-flash`). 재시도 · 조기 종료를 포함한 흐름을 LangGraph 상태 머신으로 구성하고 외부 진입점은 `ask()`(`src/agent/pipeline.py`) 하나로 고정
+- **의존성 주입 + 테스트**: `ask()` 와 `build_graph()` 가 검색기(`Retriever`)와 LLM 클라이언트를 인자로 수신(`make_retrieve`/`make_answer` 클로저 팩토리로 노드에 주입). 실행 시 기본 객체 생성, 테스트 시 가짜 검색기 · 클라이언트를 주입해 Chroma · Gemini 호출 없이 노드별 검증. 라우팅 분기 같은 순수 함수는 단위 테스트로 검증해 합계 63개 구성
+- **개발 원칙**: 기획서 가정 → `experiments/` PoC 검증 → 통과분만 `src/` 구현. 실패 시 `docs/validation/` 에 사유 · 대안 기록 후 기획 수정
 
 ---
 
@@ -71,19 +102,18 @@ src/
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate          # Windows (bash: source .venv/Scripts/activate)
+.venv\Scriptsctivate          # Windows (bash: source .venv/Scripts/activate)
 pip install -r requirements.txt
 ```
 
-`.env` 파일을 만들고(`copy .env.example .env`) 아래 값을 채웁니다:
+`.env` 파일 생성(`copy .env.example .env`) 후 아래 값 기입.
 
 ```
 GOOGLE_API_KEY=<Google AI Studio 키>      # 임베딩·LLM 호출용
 MANUAL_PDF_PATH=data/raw/R30iA-Mate-Controller-Maintenance-Manual.pdf
 ```
 
-> 매뉴얼 PDF는 저작권 문제로 repo에 포함하지 않으므로 `data/raw/`에 직접 배치합니다.
-> 인덱싱은 임베딩 API를 다량 호출하므로 무료 티어 일일 쿼터에 막힐 수 있습니다(유료 티어 권장).
+매뉴얼 PDF 는 저작권 문제로 저장소 미포함, `data/raw/` 에 직접 배치. 인덱싱은 임베딩 API 를 다량 호출하므로 무료 티어 일일 쿼터 초과 가능(유료 티어 권장).
 
 ### 2. 인덱싱 (PDF → 파싱 → 임베딩 → Chroma 적재)
 
@@ -106,46 +136,27 @@ print(result["retrieval_mode"])   # filtered | unfiltered | unfiltered_fallback 
 print(result["sources"])          # [{error_code, page_no, parsed_by}, ...]
 ```
 
-### 테스트
+### 4. 데모 UI · 테스트
 
 ```bash
+streamlit run app.py
 pytest tests/ -v
-```
-
----
-
-## 개발 배경
-
-DACON 스마트 제조 AI 해커톤 **본선 진출 결과물의 개념을 계승**해, 프로덕션 수준으로 **새로 구현**한 프로젝트입니다(기존 코드는 가져오지 않았습니다).
-
-해커톤 당시에는 빠른 프로토타입을 위해 Cross-Reference RAG가 가능한 일부 데이터만으로 개발해 매뉴얼 전체를 반영하지 못했고, 기술 검증 없이 LLM에 기댄 기획이었습니다. 완성도와 기술 이해를 함께 끌어올리기 위해 처음부터 다시 구현했고, 핵심 원칙은 **검증 우선**으로 두었습니다:
-
-```
-기획서 가정 → experiments/ PoC 검증 → 통과분만 src/ 정식 구현
-                                   → 실패 시 docs/validation/ 에 사유·대안 기록 + 기획 수정
 ```
 
 ---
 
 ## 측정 결과
 
-정량 수치는 실제 측정한 것만 적었습니다. 자세한 기록은 `docs/validation/`에 있습니다.
+실측한 수치만 기재. 상세 기록은 `docs/validation/`.
 
-- **라우팅 정확도** — 25질의 클린 테스트셋에서 **25/25(100%)**가 설계 의도대로 분기했습니다([검증 기록](docs/validation/A6-routing-quality-eval.md)). 라우팅은 규칙 기반·결정적이고 입력이 정상 형식이므로, 이 수치는 "정상 입력에서 분기가 설계대로 동작"함을 뜻하며 변형 입력 견고성과는 별개입니다.
-- **변형 입력 견고성** — 9케이스 측정 중 소문자 입력 버그를 발견·수정(`CODE_RE`에 `IGNORECASE`+하이픈 선택 + 정규화)해 **9/9**가 되었습니다([검증 기록 §7](docs/validation/A6-routing-quality-eval.md)).
+- **라우팅 정확도**: 25질의 클린 테스트셋에서 25/25 가 설계 의도대로 분기([검증 기록](docs/validation/A6-routing-quality-eval.md)). 라우팅은 규칙 기반 · 결정적이므로 정상 입력에서의 분기 동작을 뜻하며 변형 입력 견고성과는 별개
+- **변형 입력 견고성**: 9케이스 측정 중 소문자 입력 버그 발견 · 수정(`CODE_RE` 에 `IGNORECASE` + 하이픈 선택 + 정규화)으로 7/9 → 9/9([검증 기록 §7](docs/validation/A6-routing-quality-eval.md))
 
 ---
 
 ## 한계
 
-- **단일 턴·무상태**의 규칙 기반 조건부 라우팅 구조입니다. LLM이 라우팅을 판단하지 않으며(정규식 + 0건 판정), 자율 에이전트나 멀티에이전트는 아닙니다.
-- 답변 품질 정량 평가, 검색 정확도(올바른 청크 회수), LLM·임베딩 모델 비교(A6 나머지)는 아직 측정하지 않았습니다. 정량 수치는 측정한 뒤에만 적을 계획입니다.
-- 오타 교정·별칭(`BZAL`→코드) 매핑은 미구현입니다(의도된 안전 폴백). 비필터 재시도(`unfiltered_fallback`)로 얻은 답변은 요청 코드와 다른 출처일 수 있어, `sources`의 `error_code`로 교차확인해야 합니다.
-
----
-
-## 배운 점
-
-- **기술 검증을 먼저 하고 개발한다** — 해커톤 때는 시간이 부족해 매뉴얼 일부 데이터만 보고 Cross-Reference RAG가 실제로 동작하는지 확인하지 않은 채 진행했습니다. 이번에 다시 개발하면서, 기술 가정을 먼저 검증하고 들어가야 개발 도중 터지는 문제가 줄어든다는 걸 체감했습니다(그 결과가 [ADR-002](docs/decisions/ADR-002-cross-reference-rag-redefinition.md)의 가정 기각·재정의입니다).
-- **LLM에 맡길 일과 규칙으로 둘 일을 나눈다** — 앞서 AI-SkinView 챗봇을 개발하면서 LLM이 정해둔 규칙대로만 움직이지 않고 임의로 동작할 수 있다는 걸 겪었습니다. 그래서 라우팅은 LLM이 아니라 규칙 기반(정규식 + 0건 판정)으로 두었고, 검색 결과가 0건이면 어차피 쓸 근거가 없으니 LLM을 호출하지 않아 불필요한 비용도 줄였습니다.
-- **처음 써본 기술을 실제로 적용해봤다** — RAG 파이프라인을 직접 구성하고, 의존성 주입으로 각 노드를 독립 테스트하는 방식을 이 프로젝트에서 처음 적용했습니다(적용 방식은 위 [구현 노트](#구현-노트) 참고).
+- 단일 턴 · 무상태의 규칙 기반 조건부 라우팅. LLM 이 라우팅을 판단하지 않으며(정규식 + 0건 판정) 자율 에이전트나 멀티에이전트가 아님
+- 답변 품질 정량 평가, 검색 정확도(올바른 청크 회수), LLM · 임베딩 모델 비교(A6 잔여) 미측정. 정량 수치는 측정 후에만 기재
+- Docker · CI · 배포 구성 없음
+- 오타 교정 · 별칭(`BZAL` → 코드) 매핑 미구현(의도된 안전 폴백). 비필터 재시도(`unfiltered_fallback`)로 얻은 답변은 요청 코드와 다른 출처일 수 있어 `sources` 의 `error_code` 로 교차 확인 필요
