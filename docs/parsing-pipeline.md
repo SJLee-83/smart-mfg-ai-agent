@@ -122,7 +122,7 @@ def tag(chunks: list[RawChunk]) -> list[Chunk]: ...
 - **원안**: WARNING→HIGH, CAUTION→MEDIUM, **기본 MEDIUM**.
 - **변경안(팀 권장)**: 값 `{HIGH, MEDIUM, UNKNOWN}`, **기본 UNKNOWN**. 매핑 `WARNING/DANGER→HIGH`, `CAUTION/NOTE→MEDIUM`, 키워드 없음→`UNKNOWN`. 동시 등장 시 HIGH 우선.
 - **근거**: "기본 MEDIUM"은 없는 심각도를 **날조** → `where severity=MEDIUM` 필터가 무키워드 청크와 진짜 MEDIUM을 섞음. UNKNOWN은 "표기된 심각도 미검출"을 정직하게 보존(비용 0). CLAUDE.md "측정한 것만 주장" 부합.
-- **정직성 기록(필수 동반)**: *"severity는 안전고지어(WARNING/CAUTION) 기반 키워드 휴리스틱이며, 매뉴얼의 네이티브 알람 심각도(STOP/SERVO/WARN/PAUSE…)가 아니다. 정밀도 미검증(A5 관련). 면접 표현: '키워드 기반 severity 태거 구현, 정밀도 미측정'."*
+- **정직성 기록(필수 동반)**: *"severity는 안전고지어(WARNING/CAUTION) 기반 키워드 휴리스틱이며, 매뉴얼의 네이티브 알람 심각도(STOP/SERVO/WARN/PAUSE…)가 아니다. 정밀도 미검증(A5 관련). 표기는 '키워드 기반 severity 태거, 정밀도 미측정'."*
 - **확정(2026-06-05, 사용자 사인오프)**: 필드명 = **`severity_hint`**, 기본값 = **UNKNOWN**. 이름 자체가 휴리스틱임을 표시. 키워드셋은 미검증(A5)이라 `constants.py`에 "preliminary" 주석.
 
 ### 2.5 청킹 경계: 구조적 "(N) SRVO-NNN" 키 — **하드코딩 없는 p.227/p.53 배제**
@@ -131,7 +131,7 @@ def tag(chunks: list[RawChunk]) -> list[Chunk]: ...
   - **괄호 교차참조 `(SRVO-072)`** → 코드가 괄호 안이라 경계 매칭 불가 → 블록을 쪼개지 않음.
   - **p.53(알람이력 UI)**: 코드가 `2 SRVO-002`처럼 괄호 없는 리스트인덱스 → 0청크.
   - **p.227(5장 커넥터 표)**: 코드가 표 행 중간(`At cold start, SRVO-300`) → 0청크.
-- **하드코딩 페이지범위(p.53–104) 기각**: 브리틀(재페이지네이션·다른 컨트롤러 PDF에서 깨짐)하고 포트폴리오상 부정직("이 PDF 페이지번호에서만 동작"). 구조적 키는 매뉴얼의 **저작 관례**에 의존해 일반화됨. domain-rag가 페이지범위안을 **철회**하고 이 방식 채택. (이전 레포 "섹션번호 하드코딩" 한계를 실제로 개선)
+- **하드코딩 페이지범위(p.53–104) 기각**: 브리틀(재페이지네이션·다른 컨트롤러 PDF에서 깨짐)하고 적용 범위가 "이 PDF 페이지번호에서만 동작"으로 한정됨. 구조적 키는 매뉴얼의 **저작 관례**에 의존해 일반화됨. domain-rag가 페이지범위안을 **철회**하고 이 방식 채택. (이전 레포 "섹션번호 하드코딩" 한계를 실제로 개선)
 - **검증 의무**: 실제 실행 시 p.53·p.227이 0청크임을 **로깅**해 "구조적 배제 검증됨, 하드코딩 범위 없음"을 정직 기록.
 
 ### 2.6 content 앵커링 — header/title를 content에 포함
@@ -147,7 +147,7 @@ def tag(chunks: list[RawChunk]) -> list[Chunk]: ...
 ### 2.8 related_codes — 휴면 데이터 (ADR-002 안전)
 - 파서가 블록 내 `\(SRVO-\d{3}\)`를 추출(자기코드 제외, 첫등장 순서) → `RawChunk.related_codes: list[str]`. tagger가 comma-join `str`로 메타데이터화(`""` if none).
 - 실측 정합: p.81 094→["SRVO-072"], 095→["SRVO-073"], 096→["SRVO-074"], 097→["SRVO-075"], 105→[]. (측정 15회/6페이지와 일치)
-- **가드레일**: 순수 데이터 캡처(재검색·병합·답변구동 없음). 코드/문서/포트폴리오에서 **"Cross-Reference RAG" 등으로 명명 금지**(ADR-002 폐기). 나중에 검색에 연결하면 그건 새 검증대상 기능.
+- **가드레일**: 순수 데이터 캡처(재검색·병합·답변구동 없음). 코드·문서에서 **"Cross-Reference RAG" 등으로 명명 금지**(ADR-002 폐기). 나중에 검색에 연결하면 그건 새 검증대상 기능.
 
 ### 2.9 parsed_by 메타데이터 / 테스트 / 에러처리 / 패키징
 - **parsed_by**: 메타데이터 포함(`marker`/`fallback`) → 폴백 청크 품질 감사·필터.
